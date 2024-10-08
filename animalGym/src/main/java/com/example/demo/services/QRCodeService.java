@@ -16,7 +16,7 @@ import com.google.zxing.qrcode.QRCodeWriter;
 public class QRCodeService {
 
 	public String generateQRCode(String text, int width, int height) {
-		String qrCodePath = "./src/main/resources/qrcodes/";
+		String qrCodePath = "src/main/resources/static/images";
 		String qrCodeName = qrCodePath + text + "-QRCODE.png";
 		QRCodeWriter qrCodeWriter = new QRCodeWriter();
 		try {

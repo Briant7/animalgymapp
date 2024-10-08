@@ -2,10 +2,12 @@ package com.example.demo.services;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -13,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
@@ -20,8 +23,8 @@ public class UploadFileServiceImpl implements IUploadFileService{
 	
 	private final Logger log = LoggerFactory.getLogger(IUploadFileService.class);
 	
-	private final static String DIRECTORIO_UPLOAD = "uploads";
-
+	private final static String DIRECTORIO_UPLOAD = "src//main//resources//static/images";
+	
 	@Override
 	public Resource cargar(String nombreFoto) throws MalformedURLException {		
 		Path rutaArhivo = getPath(nombreFoto);
@@ -46,14 +49,30 @@ public class UploadFileServiceImpl implements IUploadFileService{
 	}
 
 	@Override
-	public String copiar(MultipartFile archivo) throws IOException {
-		String nombreArchivo = UUID.randomUUID().toString() + "_" + archivo.getOriginalFilename().replace(" ", "");
-		Path rutaArhivo = getPath(nombreArchivo);
-		log.info(rutaArhivo.toString());
+	public String copiar(MultipartFile multipartFile) throws IOException {
 		
-		Files.copy(archivo.getInputStream(), rutaArhivo);
-		
-		return nombreArchivo;
+		String fileName = StringUtils.cleanPath(multipartFile.getOriginalFilename());
+        //Establecemos el directorio donde se subiran nuestros ficheros  
+        String uploadDir = DIRECTORIO_UPLOAD;
+         
+        guardarFile(uploadDir, fileName, multipartFile);
+        return fileName;
+	}
+
+	public static void guardarFile(String uploadDir, String fileName,
+	        MultipartFile multipartFile) throws IOException {
+	    Path uploadPath = Paths.get(uploadDir);
+	      
+	    if (!Files.exists(uploadPath)) {
+	        Files.createDirectories(uploadPath);
+	    }
+	      
+	    try (InputStream inputStream = multipartFile.getInputStream()) {
+	        Path filePath = uploadPath.resolve(fileName);
+	        Files.copy(inputStream, filePath, StandardCopyOption.REPLACE_EXISTING);
+	    } catch (IOException ioe) {        
+	        throw new IOException("Could not save image file: " + fileName, ioe);
+	    }      
 	}
 	
 	@Override
@@ -84,3 +103,4 @@ public class UploadFileServiceImpl implements IUploadFileService{
 	}
 
 }
+
