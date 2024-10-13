@@ -45,7 +45,6 @@ public class Cliente implements Serializable {
 	
 	private String telefono;
 	
-	@Email
 	private String correo;
 	
 	private String foto;

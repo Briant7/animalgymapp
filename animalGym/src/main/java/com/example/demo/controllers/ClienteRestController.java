@@ -290,6 +290,7 @@ public class ClienteRestController {
 				clienteActual.setFechaInicio(sumarHoras(cliente.getFechaInicio()));
 				clienteActual.setFechaFin(sumarHoras(cliente.getFechaFin()));
 				clienteActual.setEstatus(true);
+				clienteActual.setPeriodo(cliente.getPeriodo());
 				System.out.println("Cliente: " + clienteActual);
 			} 
 			else if (cliente.isEstatus() == false || cliente.getRoleUser().equals("ROLE_ADMIN")) {
@@ -325,9 +326,10 @@ public class ClienteRestController {
 				}
 
 				clienteActual.setFechaFin(fechaActualizar);
-				clienteActual.setEstatus(true);
+				
 			}
-
+			clienteActual.setEstatus(true);
+			clienteActual.setFechaRegistro(new Date());
 			clienteActualizado = clienteService.save(clienteActual);
 			
 			String nombreCompleto = clienteActualizado.getNombre() + " " + clienteActualizado.getApellidos();
@@ -471,7 +473,7 @@ public class ClienteRestController {
 			System.out.println("ENTRA como ROLE_ADMIN: " + cliente);
 			if(cliente.getFechaFin() !=null && cliente.getFechaFin().after(fecha)) {
 				System.out.println("FECHA FIN ES ANTERIOR: " + cliente);
-				fecha = cliente.getFechaFin();
+				fecha = sumarHoras(cliente.getFechaFin());
 			}
 		}
 		Calendar calendar = Calendar.getInstance();
