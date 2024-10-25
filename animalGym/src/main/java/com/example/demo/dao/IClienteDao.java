@@ -12,13 +12,16 @@ import com.example.demo.entity.Periodo;
 
 public interface IClienteDao extends JpaRepository<Cliente, Long>{
 	
-	@Query("from Periodo")
+	@Query("from Cliente c where c.nombre!= 'Visita'")
+	public Page<Cliente> findAllClientesTodos(Pageable pageable);
+	
+	@Query("from Periodo p where p.nombre!= 'Visita'")
 	public List<Periodo> findAllPeriodos();
 	
-	@Query("from Cliente c where c.fechaFin <= CURDATE()")
+	@Query("from Cliente c where c.fechaFin <= CURDATE() and c.nombre!= 'Visita'")
 	public Page<Cliente> findAllClientesVencidos(Pageable pageable);
 	
-	@Query("from Cliente c where c.fechaFin > CURDATE()")
+	@Query("from Cliente c where c.fechaFin > CURDATE() and c.nombre!= 'Visita'")
 	public Page<Cliente> findAllClientesActivos(Pageable pageable);
 	
 	@Query("from Cliente c where c.fechaRegistro = CURDATE()")
@@ -44,4 +47,7 @@ public interface IClienteDao extends JpaRepository<Cliente, Long>{
 
 	@Query("SELECT COUNT(*) FROM Cliente c WHERE c.numControl = ?1")
 	public int findByNumeroControl(String numControl);
+	
+	@Query("SELECT c FROM Cliente c WHERE c.correo = ?1")
+	public Cliente findByClienteCorreo(String correo);
 }

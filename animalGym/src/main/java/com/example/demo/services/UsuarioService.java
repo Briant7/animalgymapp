@@ -137,4 +137,9 @@ public class UsuarioService implements IUsuarioService, UserDetailsService {
 		productoDao.deleteById(id);
 	}
 
+	@Override
+	public Usuario findByUsuarioCorreo(String correo) {
+		return usuarioDao.findByUsuarioCorreo(correo);
+	}
+
 }

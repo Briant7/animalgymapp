@@ -105,5 +105,17 @@ public class ClienteServiceImpl implements IClienteService {
 	public Page<Cliente> findAllClientesActivos(Pageable pageable) {
 		return clienteDao.findAllClientesActivos(pageable);
 	}
+
+	@Override
+	public Cliente findByClienteCorreo(String correo) {
+		
+		return clienteDao.findByClienteCorreo(correo);
+	}
+
+	@Override
+	public Page<Cliente> findAllClientesTodos(Pageable pageable) {
+		
+		return clienteDao.findAllClientesTodos(pageable);
+	}
 	
 }

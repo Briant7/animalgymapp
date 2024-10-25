@@ -51,6 +51,10 @@ public class ResourceServerConfig extends ResourceServerConfigurerAdapter {
 		.antMatchers(HttpMethod.POST, "/animalgym/ventas").permitAll()
 		.antMatchers(HttpMethod.PUT, "/animalgym/clientes").hasAnyRole("USER", "ADMIN")
 		.antMatchers(HttpMethod.DELETE, "/animalgym/clientes").hasRole("ADMIN")
+		.antMatchers(HttpMethod.POST, "/animalgym/recupera/contraseña").permitAll()
+		.antMatchers(HttpMethod.POST, "/animalgym/actualizar/contraseña").permitAll()
+		.antMatchers(HttpMethod.GET, "/animalgym/enviar/qr/{id}").permitAll()
+		.antMatchers(HttpMethod.GET, "/animalgym/registra/operacion/{username}").permitAll()
 //		http.authorizeRequests().antMatchers(HttpMethod.GET, "/leones-gym-back/animalgym/clientes", "/leones-gym-back/animalgym/clientes/page/**", 
 //				"/leones-gym-back/animalgym/uploads/img/**",
 //				"/leones-gym-back/images/**", "/leones-gym-back/animalgym/clientes/periodos", "/leones-gym-back/animalgym/clientes/qr/{id}", 

@@ -12,6 +12,8 @@ public interface IClienteService {
 	
 	public List<Cliente> findAll();
 	
+	public Page<Cliente> findAllClientesTodos(Pageable pageable);
+	
 	public Page<Cliente> findAll(Pageable pageable);
 	
 	public Page<Cliente> findAllClientesRegistros(Pageable pageable);
@@ -41,5 +43,7 @@ public interface IClienteService {
 	public int findCountClientesHoyRegistros();
 	
 	public int findByNumeroControl(String numControl);
+	
+	public Cliente findByClienteCorreo(String correo);
 
 }

@@ -41,5 +41,6 @@ public interface IUsuarioService {
 	public Producto findProductoById(Long id);
 	
 	public void deleteProducto(Long id);
-
+	
+	public Usuario findByUsuarioCorreo(String correo);
 }

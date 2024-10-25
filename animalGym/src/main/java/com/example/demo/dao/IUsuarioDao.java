@@ -23,4 +23,7 @@ public interface IUsuarioDao extends JpaRepository<Usuario, Long>{
 	@Query("SELECT r FROM Role r WHERE r.nombre = ?1")
 	public Role findByNombre(String nombre);
 	
+	@Query("SELECT u FROM Usuario u WHERE u.email = ?1")
+	public Usuario findByUsuarioCorreo(String correo);
+	
 }

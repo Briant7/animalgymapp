@@ -45,6 +45,7 @@ public class Cliente implements Serializable {
 	
 	private String telefono;
 	
+	@Column(unique = true)
 	private String correo;
 	
 	private String foto;

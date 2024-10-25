@@ -65,7 +65,7 @@ public class ClienteRestController {
 
 	@Autowired
 	private ClienteComponent component;
-	
+
 	@Autowired
 	private IOperacionesService operaciones;
 
@@ -94,7 +94,7 @@ public class ClienteRestController {
 	public Page<Cliente> clientesVencidos(@PathVariable Integer page) {
 		return clienteService.findAllClientesVencidos(PageRequest.of(page, 8));
 	}
-	
+
 	@GetMapping("/clientes/activos/page/{page}")
 	public Page<Cliente> clientesActivos(@PathVariable Integer page) {
 		return clienteService.findAllClientesActivos(PageRequest.of(page, 8));
@@ -103,27 +103,27 @@ public class ClienteRestController {
 	@GetMapping("/historial/page/{page}")
 	public Page<Historial> historial(@PathVariable Integer page) {
 		historialService.deleteHistorial(restarDiasAFecha(3));
-		
+
 		Page<Historial> historial = historialService.findAll(PageRequest.of(page, 8));
-		//Eliminar historial
-		
+		// Eliminar historial
+
 		return historial;
 	}
 
 	@GetMapping("/clientes/page/{page}")
 	public Page<Cliente> index(@PathVariable Integer page) {
-		return clienteService.findAll(PageRequest.of(page, 8));
+		return clienteService.findAllClientesTodos(PageRequest.of(page, 8));
 	}
-	
+
 	@GetMapping("/clientes/registros/{page}")
 	public Page<Cliente> clientesRegistros(@PathVariable Integer page) {
 		return clienteService.findAllClientesRegistros(PageRequest.of(page, 8));
 	}
-	
+
 	@GetMapping("/operaciones/page/{page}")
 	public Page<Operacion> obtenerOperaciones(@PathVariable Integer page) {
 		operaciones.deleteOperacion(restarDiasAFecha(10));
-		
+
 		return operaciones.findAll(PageRequest.of(page, 8));
 	}
 
@@ -153,6 +153,13 @@ public class ClienteRestController {
 
 			cliente = clienteService.findById(id);
 
+			if (cliente == null || Objects.isNull(cliente)) {
+				cliente = new Cliente();
+				cliente.setExiste(false);
+				cliente.setId((long) 0);
+			} else {
+				cliente.setExiste(true);
+			}
 		} catch (Exception e) {
 			System.out.println(e);
 			response.put("mensaje", "Error al consultar la base de datos");
@@ -168,13 +175,12 @@ public class ClienteRestController {
 		Map<String, Object> response = new HashMap<>();
 		try {
 			cliente = component.validarEstatus(numcontrol);
-			if(cliente == null || Objects.isNull(cliente)) {
+			if (cliente == null || Objects.isNull(cliente)) {
 				System.out.println("CLIENTE ES NULLL: ");
 				cliente = new Cliente();
 				cliente.setExiste(false);
 				cliente.setId((long) 0);
-			}
-			else {
+			} else {
 				cliente.setExiste(true);
 			}
 		} catch (Exception e) {
@@ -182,13 +188,13 @@ public class ClienteRestController {
 			response.put("error", e.getMessage().concat(": "));
 			return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		
+
 		System.out.println("CLIENTE1111: " + cliente);
 		return new ResponseEntity<Cliente>(cliente, HttpStatus.OK);
 	}
-	
+
 	@GetMapping("/clientes/enviar/{id}")
-	public ResponseEntity<?> operaciones(@PathVariable Long id){
+	public ResponseEntity<?> operaciones(@PathVariable Long id) {
 		Cliente cliente = null;
 		Map<String, Object> response = new HashMap<>();
 		try {
@@ -209,7 +215,7 @@ public class ClienteRestController {
 		Cliente clienteNuevo = null;
 		Map<String, Object> response = new HashMap<>();
 		try {
-			String numControl = obtenerNumeroControl();		
+			String numControl = obtenerNumeroControl();
 
 			Date fechaFin = new Date();
 
@@ -217,6 +223,9 @@ public class ClienteRestController {
 				System.out.println("ENTRA A como ADMIN SUPER: " + cliente);
 				cliente.setFechaInicio(sumarHoras(cliente.getFechaInicio()));
 				cliente.setFechaFin(sumarHoras(cliente.getFechaFin()));
+				Periodo periodo = new Periodo();
+				periodo.setId(8L);
+				cliente.setPeriodo(periodo);
 				System.out.println("FechaInicio: " + cliente.getFechaInicio());
 			} else {
 				System.out.println("ENTRA COMO USER: " + cliente);
@@ -254,12 +263,22 @@ public class ClienteRestController {
 
 			clienteNuevo = clienteService.save(cliente);
 			generarQR(clienteNuevo, numControl);
-			
+
 			String nombreCompleto = cliente.getNombre() + " " + cliente.getApellidos();
 			guardarOperacion("Registro", cliente, nombreCompleto, fechaFin);
 		} catch (Exception e) {
-			response.put("mensaje", "Error al insertar la base de datos");
-			response.put("error", e.getMessage().concat(": "));
+			if (e.toString().contains("com.sun.mail.util.MailConnectException")) {
+				response.put("mensaje", "Error al enviar el correo!");
+				response.put("error", "Se registro el cliente pero no se le pudo enviar correo!");
+			} else if (e.toString().contains("org.springframework.dao.DataIntegrityViolationException")) {
+				Cliente clienteCorreo = clienteService.findByClienteCorreo(cliente.getCorreo());
+				response.put("mensaje", "Error al insertar la base de datos");
+				response.put("error", "Ya existe un cliente con el correo que se ingreso: " + clienteCorreo.getNombre()
+						+ " " + clienteCorreo.getApellidos());
+			} else {
+				response.put("mensaje", "Error al insertar la base de datos");
+				response.put("error", e.getMessage().concat(": "));
+			}
 			return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		response.put("mensaje", "El cliente se ha creado con exito");
@@ -284,22 +303,24 @@ public class ClienteRestController {
 			clienteActual.setApellidos(cliente.getApellidos());
 			clienteActual.setCorreo(cliente.getCorreo());
 			System.out.println("FechaInicio: " + cliente.getFechaInicio());
-			
+
 			if (cliente.getUsername().equals("admin")) {
 				System.out.println("ENTRA A ACTUALIZA COMO SUPER ADMIN");
 				clienteActual.setFechaInicio(sumarHoras(cliente.getFechaInicio()));
 				clienteActual.setFechaFin(sumarHoras(cliente.getFechaFin()));
 				clienteActual.setEstatus(true);
 				clienteActual.setPeriodo(cliente.getPeriodo());
+				Periodo periodo = new Periodo();
+				periodo.setId(8L);
+				clienteActual.setPeriodo(periodo);
 				System.out.println("Cliente: " + clienteActual);
-			} 
-			else if (cliente.isEstatus() == false || cliente.getRoleUser().equals("ROLE_ADMIN")) {
+			} else if (cliente.isEstatus() == false || cliente.getRoleUser().equals("ROLE_ADMIN")) {
 				Date fechaActualizar = new Date();
 				clienteActual.setPeriodo(cliente.getPeriodo());
-				if(cliente.getRoleUser().equals("ROLE_USER") || cliente.getFechaFin().before(fechaActualizar)) {
+				if (cliente.getRoleUser().equals("ROLE_USER") || cliente.getFechaFin().before(fechaActualizar)) {
 					clienteActual.setFechaInicio(fechaActualizar);
 				}
-				
+
 				switch (cliente.getPeriodo().getPeriodo()) {
 				case 7:
 					fechaActualizar = sumarDiasAFecha(cliente.getPeriodo().getPeriodo(), cliente);
@@ -326,14 +347,14 @@ public class ClienteRestController {
 				}
 
 				clienteActual.setFechaFin(fechaActualizar);
-				
+
 			}
 			clienteActual.setEstatus(true);
 			clienteActual.setFechaRegistro(new Date());
 			clienteActualizado = clienteService.save(clienteActual);
-			
+
 			String nombreCompleto = clienteActualizado.getNombre() + " " + clienteActualizado.getApellidos();
-			guardarOperacion("Modificación", cliente, nombreCompleto, cliente.getFechaFin());
+			guardarOperacion("Renovación", cliente, nombreCompleto, cliente.getFechaFin());
 		} catch (Exception e) {
 			response.put("mensaje", "Error al actualizar la base de datos");
 			response.put("error", e.getMessage().concat(": "));
@@ -426,6 +447,30 @@ public class ClienteRestController {
 		this.emailService.sendListEmail("alejandro12olea@gmail.com", path);
 	}
 
+	@GetMapping("/enviar/qr/{id}")
+	public ResponseEntity<?> enviarQR(@PathVariable Long id) {
+		Map<String, Object> response = new HashMap<>();
+
+		try {
+			Cliente cliente = clienteService.findById(id);
+			String text = Long.toString(cliente.getId());
+			int width = 350;
+			int height = 350;
+
+			String path = qrCodeService.generateQRCode(text, width, height);
+
+			this.emailService.reenviarQREmail(cliente, path);
+
+		} catch (Exception e) {
+			response.put("mensaje", "Error al enviar el codigo QR");
+			response.put("error", e.getMessage().concat(": "));
+			return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+		response.put("mensaje", "Se ha enviado el código QR con exito");
+		return new ResponseEntity<Map<String, Object>>(response, HttpStatus.CREATED);
+	}
+
 	public void generarQR(Cliente cliente, String numControl) throws Exception {
 		String text = Long.toString(cliente.getId());
 		int width = 350;
@@ -433,12 +478,12 @@ public class ClienteRestController {
 
 		String path = qrCodeService.generateQRCode(text, width, height);
 
-		if(cliente.getCorreo() != null) {
+		if (cliente.getCorreo() != null) {
 			this.emailService.sendListEmail(cliente, path, numControl);
-		}else {
-			this.emailService.sendListEmailToAdmin( "briantvazquez@gmail.com", path, numControl);
+		} else {
+			this.emailService.sendListEmailToAdmin("briantvazquez@gmail.com", path, numControl);
 		}
-		
+
 	}
 
 	public static Date sumarDiasAFecha(int dias, Cliente cliente) {
@@ -447,8 +492,8 @@ public class ClienteRestController {
 		if (dias == 0) {
 			return fecha;
 		}
-		if(cliente.getRoleUser().equals("ROLE_ADMIN")) {
-			if(cliente.getFechaFin() !=null && cliente.getFechaFin().after(fecha)) {
+		if (cliente.getRoleUser().equals("ROLE_ADMIN")) {
+			if (cliente.getFechaFin() != null && cliente.getFechaFin().after(fecha)) {
 				fecha = cliente.getFechaFin();
 			}
 		}
@@ -457,7 +502,7 @@ public class ClienteRestController {
 		calendar.add(Calendar.DAY_OF_YEAR, dias);
 		return calendar.getTime();
 	}
-	
+
 	public static Date restarDiasAFecha(int dias) {
 		Date fecha = new Date();
 
@@ -469,9 +514,9 @@ public class ClienteRestController {
 
 	public static Date sumarMesAFecha(int meses, Cliente cliente) {
 		Date fecha = new Date();
-		if(cliente.getRoleUser().equals("ROLE_ADMIN")) {
+		if (cliente.getRoleUser().equals("ROLE_ADMIN")) {
 			System.out.println("ENTRA como ROLE_ADMIN: " + cliente);
-			if(cliente.getFechaFin() !=null && cliente.getFechaFin().after(fecha)) {
+			if (cliente.getFechaFin() != null && cliente.getFechaFin().after(fecha)) {
 				System.out.println("FECHA FIN ES ANTERIOR: " + cliente);
 				fecha = sumarHoras(cliente.getFechaFin());
 			}
@@ -482,7 +527,7 @@ public class ClienteRestController {
 
 		return calendar.getTime();
 	}
-	
+
 	public static Date sumarHoras(Date fecha) {
 		Calendar calendar = Calendar.getInstance();
 		calendar.setTime(fecha);
@@ -514,7 +559,7 @@ public class ClienteRestController {
 		}
 		return numCadena;
 	}
-	
+
 	public void guardarOperacion(String tipoOperacion, Cliente cliente, String nombre, Date fechaFin) {
 		Operacion operacion = new Operacion();
 		operacion.setTipoOperacion(tipoOperacion);
@@ -529,6 +574,28 @@ public class ClienteRestController {
 		operacion.setNuevaFecFin(fechaFin);
 		operaciones.save(operacion);
 	}
+	
+	@GetMapping("/registra/operacion/{username}")
+	public ResponseEntity<?> listarPeriodos(@PathVariable String username) {
+		Map<String, Object> response = new HashMap<>();
+		Cliente cliente = component.validarEstatus("101");
+		guardarOperacionVisita("Visita pagada", cliente, username, new Date());
+		response.put("mensaje", "Se ha registrado operacion con exito");
+		return new ResponseEntity<Map<String, Object>>(response, HttpStatus.OK);
+	}
 
+	public void guardarOperacionVisita(String tipoOperacion, Cliente cliente, String username, Date fechaFin) {
+		Operacion operacion = new Operacion();
+		operacion.setTipoOperacion(tipoOperacion);
+		operacion.setUsername(username);
+		Date fechaHoy = new Date();
+		operacion.setFecha(fechaHoy);
+		DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss");
+		operacion.setHora(dateFormat.format(fechaHoy));
+		operacion.setCliente("Visita Pagada");
+		operacion.setClienteActual("");
+		operacion.setFechaFin(cliente.getFechaFin());
+		operacion.setNuevaFecFin(fechaFin);
+		operaciones.save(operacion);
+	}
 }
-
