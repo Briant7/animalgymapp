@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.demo.entity.DetalleVenta;
 import com.example.demo.entity.Producto;
 import com.example.demo.entity.Usuario;
 import com.example.demo.entity.Venta;
@@ -59,10 +60,16 @@ public class VentaRestController {
 	@PostMapping("/ventas")
 	@ResponseStatus(code = HttpStatus.CREATED)
 	public Venta crear(@RequestBody Venta venta) {
-		System.out.println("VENTA::::::::::::: " + venta);
 		Usuario usuario = null;
 		usuario = usuarioService.findByUsername(venta.getUser());
 		venta.setUsuario(usuario);
+		for (DetalleVenta detalle : venta.getDetalles()) {
+			Producto producto = detalle.getProducto();
+			producto = userService.findProductoById(producto.getId());
+			Integer stock = producto.getStock();
+			producto.setStock(stock - detalle.getCantidad());
+			userService.saveProducto(producto);
+		}
 		return userService.saveVenta(venta);
 	}
 
