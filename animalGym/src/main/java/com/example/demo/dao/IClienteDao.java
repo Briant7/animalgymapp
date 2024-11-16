@@ -15,7 +15,7 @@ public interface IClienteDao extends JpaRepository<Cliente, Long>{
 	@Query("from Cliente c where c.nombre!= 'Visita'")
 	public Page<Cliente> findAllClientesTodos(Pageable pageable);
 	
-	@Query("from Periodo p where p.nombre!= 'Visita'")
+	@Query("from Periodo p where p.nombre!= 'Visita' and p.nombre!= 'Admin'")
 	public List<Periodo> findAllPeriodos();
 	
 	@Query("from Cliente c where c.fechaFin <= CURDATE() and c.nombre!= 'Visita'")

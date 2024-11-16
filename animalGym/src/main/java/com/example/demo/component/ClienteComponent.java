@@ -61,7 +61,7 @@ public class ClienteComponent {
 			estado = "Inactivo";
 		}
 		//mandar un correo que hubo in ingreso
-		this.emailService.sendIngresoEmail("alejandro12olea@gmail.com", nombreCompleto, estado, cliente.getNumControl());
+		//this.emailService.sendIngresoEmail("alejandro12olea@gmail.com", nombreCompleto, estado, cliente.getNumControl());
 		return cliente;
 	}
 	
@@ -88,7 +88,7 @@ public class ClienteComponent {
 		}else {
 			estado = "Inactivo";
 		}
-		this.emailService.sendIngresoEmail("alejandro12olea@gmail.com", nombreCompleto, estado, cliente.getNumControl());
+		//this.emailService.sendIngresoEmail("alejandro12olea@gmail.com", nombreCompleto, estado, cliente.getNumControl());
 		
 		return cliente;
 	}
